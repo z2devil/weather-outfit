@@ -1,0 +1,15 @@
+{
+  "name": "weather-outfit",
+  "version": "0.1.0",
+  "description": "武汉洪山区天气穿搭推送 → 飞书",
+  "type": "module",
+  "scripts": {
+    "fetch": "node scripts/fetch-weather.mjs --mode morning",
+    "fetch:night": "node scripts/fetch-weather.mjs --mode night",
+    "render": "node scripts/render-satori.mjs --card preview/output/card-data.json"
+  },
+  "dependencies": {
+    "@resvg/resvg-js": "^2.6.2",
+    "satori": "^0.26.0"
+  }
+}

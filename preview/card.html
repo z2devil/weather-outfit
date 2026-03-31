@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>天气穿搭推送卡片 - 精致版</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Outfit:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --bg-start: #0f1b35;
+            --bg-end: #1a3060;
+            --text-main: #ffffff;
+            --text-muted: rgba(255, 255, 255, 0.6);
+            --card-bg: rgba(255, 255, 255, 0.04);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --font-en: 'Outfit', sans-serif;
+            --font-zh: 'Noto Sans SC', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #050914;
+            font-family: var(--font-zh);
+            padding: 20px;
+        }
+
+        /* ----------------------------------
+           Main Card Container
+           ---------------------------------- */
+        .weather-card {
+            width: 400px;
+            border-radius: 0;
+            background: linear-gradient(145deg, var(--bg-start) 0%, var(--bg-end) 100%);
+            color: var(--text-main);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.5);
+            padding: 40px 32px;
+        }
+
+        /* 质感噪点叠加层 */
+        .weather-card::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.06'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .content-wrapper {
+            position: relative;
+            z-index: 2;
+        }
+
+        /* ----------------------------------
+           Header: Location & Date
+           ---------------------------------- */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .location {
+            font-size: 15px;
+            font-weight: 500;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .location svg {
+            width: 16px;
+            height: 16px;
+            color: rgba(255,255,255,0.8);
+        }
+
+        .date {
+            font-family: var(--font-en);
+            font-size: 13px;
+            font-weight: 300;
+            color: var(--text-muted);
+            letter-spacing: 0.5px;
+        }
+
+        /* ----------------------------------
+           Main Weather: Temp & Icon
+           ---------------------------------- */
+        .main-weather {
+            margin-bottom: 28px;
+        }
+
+        .main-weather-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-right: 8px;
+        }
+
+        .temp-current {
+            font-family: var(--font-en);
+            font-size: 5.5rem;
+            font-weight: 300;
+            line-height: 1;
+            letter-spacing: -2px;
+            background: linear-gradient(180deg, #FFFFFF 0%, rgba(255, 255, 255, 0.7) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .weather-icon-large {
+            width: 64px;
+            height: 64px;
+            color: rgba(255, 255, 255, 0.28);
+            stroke-width: 1.1;
+            flex-shrink: 0;
+        }
+
+        .weather-details {
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+            margin-top: 6px;
+        }
+
+        .weather-desc-text {
+            font-size: 15px;
+            font-weight: 500;
+            color: rgba(255,255,255,0.9);
+            letter-spacing: 1px;
+        }
+
+        .temp-range {
+            font-family: var(--font-zh);
+            font-size: 13px;
+            font-weight: 300;
+            color: var(--text-muted);
+        }
+
+        /* ----------------------------------
+           Metrics 4-Grid
+           ---------------------------------- */
+        .metrics-grid {
+            display: flex;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 16px;
+            padding: 16px 8px;
+            margin-bottom: 32px;
+            backdrop-filter: blur(12px);
+        }
+
+        .metric-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            border-right: 1px solid rgba(255, 255, 255, 0.06);
+            white-space: nowrap;
+        }
+
+        .metric-item:last-child {
+            border-right: none;
+        }
+
+        .metric-item svg {
+            width: 16px;
+            height: 16px;
+            color: rgba(255,255,255,0.6);
+        }
+
+        .metric-value {
+            font-family: var(--font-zh);
+            font-size: 13px;
+            font-weight: 400;
+            color: rgba(255,255,255,0.95);
+            white-space: nowrap;
+        }
+
+        /* ----------------------------------
+           Outfit Section (RE-DESIGNED)
+           ---------------------------------- */
+        .section-title {
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            color: rgba(255,255,255,0.7);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .section-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, rgba(255,255,255,0.15) 0%, transparent 100%);
+        }
+
+        .outfit-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .outfit-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            backdrop-filter: blur(12px);
+            position: relative;
+        }
+
+        .plan-tag {
+            display: inline-flex;
+            padding: 4px 10px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.06);
+            color: rgba(255, 255, 255, 0.8);
+            font-family: var(--font-en);
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            align-self: flex-start;
+        }
+
+        .clothing-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .clothing-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 15px;
+            color: #ffffff;
+            font-weight: 500;
+        }
+
+        .clothing-item svg {
+            width: 18px;
+            height: 18px;
+            color: #ffffff;
+            flex-shrink: 0;
+        }
+
+        .clothing-item.muted {
+            color: rgba(255, 255, 255, 0.3);
+            font-weight: 400;
+        }
+
+        .clothing-item.muted svg {
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        .plan-desc {
+            font-size: 12px;
+            font-weight: 400;
+            color: rgba(255, 255, 255, 0.5);
+            padding-top: 12px;
+            border-top: 1px dashed rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .plan-desc::before {
+            content: '';
+            display: inline-block;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.4);
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="weather-card">
+        <div class="content-wrapper">
+            
+            <!-- 头部信息 -->
+            <div class="header">
+                <div class="location">
+                    <i data-lucide="map-pin"></i> 武汉·洪山区
+                </div>
+                <div class="date">2026-03-31 周二</div>
+            </div>
+
+            <!-- 核心气温与天气 -->
+            <div class="main-weather">
+                <div class="main-weather-top">
+                    <div class="temp-current">17&deg;</div>
+                    <i data-lucide="cloud-rain" class="weather-icon-large"></i>
+                </div>
+                <div class="weather-details">
+                    <span class="weather-desc-text">小雨</span>
+                    <span class="temp-range">最低13&deg; / 最高17&deg;</span>
+                </div>
+            </div>
+
+            <!-- 气象指标四宫格 -->
+            <div class="metrics-grid">
+                <div class="metric-item">
+                    <i data-lucide="droplets"></i>
+                    <span class="metric-value">87%</span>
+                </div>
+                <div class="metric-item">
+                    <i data-lucide="wind"></i>
+                    <span class="metric-value">3km/h 东北</span>
+                </div>
+                <div class="metric-item">
+                    <i data-lucide="sun"></i>
+                    <span class="metric-value">低</span>
+                </div>
+                <div class="metric-item">
+                    <i data-lucide="umbrella"></i>
+                    <span class="metric-value">90%</span>
+                </div>
+            </div>
+
+            <!-- 穿搭推荐区 (重新设计为竖排两张卡片) -->
+            <div class="section-title">今日穿搭</div>
+            
+            <div class="outfit-container">
+                <!-- 方案 A -->
+                <div class="outfit-card">
+                    <div class="plan-tag">Plan A</div>
+                    
+                    <div class="clothing-list">
+                        <div class="clothing-item">
+                            <i data-lucide="shirt"></i>
+                            <span>卫衣/厚针织衫</span>
+                        </div>
+                        <div class="clothing-item muted">
+                            <i data-lucide="layers"></i>
+                            <span>不带外套</span>
+                        </div>
+                        <div class="clothing-item muted">
+                            <i data-lucide="footprints"></i>
+                            <span>自选</span>
+                        </div>
+                    </div>
+
+                    <div class="plan-desc">
+                        外套可不带，温差小
+                    </div>
+                </div>
+
+                <!-- 方案 B -->
+                <div class="outfit-card">
+                    <div class="plan-tag">Plan B</div>
+                    
+                    <div class="clothing-list">
+                        <div class="clothing-item">
+                            <i data-lucide="shirt"></i>
+                            <span>长袖衬衫/薄针织衫</span>
+                        </div>
+                        <div class="clothing-item">
+                            <i data-lucide="layers"></i>
+                            <span>薄外套/风衣</span>
+                        </div>
+                        <div class="clothing-item muted">
+                            <i data-lucide="footprints"></i>
+                            <span>自选</span>
+                        </div>
+                    </div>
+
+                    <div class="plan-desc">
+                        层次穿搭，温差较大时推荐
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // 渲染 Lucide 图标
+        lucide.createIcons();
+    </script>
+</body>
+</html>
