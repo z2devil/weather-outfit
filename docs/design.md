@@ -1,43 +1,43 @@
-# Design Notes
+# 设计文档
 
-## Core principle
+## 核心原则
 
-**Scripts are tools only.** They handle data fetching and rendering — nothing else.
+**脚本只是工具层。** 只负责天气数据拉取和卡片渲染，不做其他任何事。
 
-The calling agent is responsible for:
-- Providing location parameters
-- Reasoning about outfit recommendations (using its own context about the user)
-- Writing `card-data.json`
-- Sending the rendered card via whatever messaging channel it uses
+调用方（AI Agent）负责：
+- 传入位置参数
+- 结合对用户的了解推理穿搭方案
+- 写入 `card-data.json`
+- 通过自己的消息渠道发送渲染好的卡片
 
-This keeps the skill stateless, user-agnostic, and reusable.
+这样设计使 skill 保持无状态、与用户无关、可复用。
 
 ---
 
-## Data flow
+## 数据流
 
 ```
 fetch-weather.mjs
   --lat / --lon / --location / --mode
         │
         ▼
-  weather.json   ←── caller reads this
+  weather.json   ←── 调用方读取
         │
-  (caller reasons, writes card-data.json)
+  （调用方推理穿搭，写 card-data.json）
         │
         ▼
 render-satori.mjs
   --card card-data.json
         │
         ▼
-  card-{mode}.png  ←── path printed to stdout
+  card-{mode}.png  ←── 路径输出到 stdout
 ```
 
 ---
 
-## Weather data
+## 天气数据
 
-**Source:** [Open-Meteo](https://open-meteo.com/) — free, no API key, no proxy needed.
+**数据源：** [Open-Meteo](https://open-meteo.com/) — 免费，无需 API key，直连。
 
 ```
 GET https://api.open-meteo.com/v1/forecast
@@ -49,54 +49,54 @@ GET https://api.open-meteo.com/v1/forecast
   &forecast_days=2
 ```
 
-Key fields used:
-- `current.temperature_2m` — current temp
-- `daily.temperature_2m_max/min` — daily high/low
-- `daily.weathercode` — [WMO weather code](https://open-meteo.com/en/docs#weathervariables)
-- `daily.precipitation_probability_max` — rain probability
-- `daily.windspeed_10m_max` — max wind speed
+主要字段：
+- `current.temperature_2m` — 当前气温
+- `daily.temperature_2m_max/min` — 当日最高/最低气温
+- `daily.weathercode` — [WMO 天气代码](https://open-meteo.com/en/docs#weathervariables)
+- `daily.precipitation_probability_max` — 降水概率
+- `daily.windspeed_10m_max` — 最大风速
 
-`--mode morning` exposes current temperature; `--mode night` exposes tomorrow's forecast.
-
----
-
-## Outfit recommendation rules (for caller reference)
-
-These are not enforced in the scripts. They are suggested constraints for the calling agent's reasoning prompt:
-
-1. **Plan count:** 2 fixed (A = warmer, B = lighter). Add a 3rd only for high wind (>30 km/h) or snow.
-2. **Base layer thickness:** driven by daily high (how warm it gets)
-3. **Outer layer thickness:** driven by temperature swing (high − low)
-4. **Footwear:** rain → waterproof, snow → grippy, cold → thick-soled, otherwise → sneakers
-5. **Note per plan:** one short situational hint
+`--mode morning` 输出当前气温；`--mode night` 输出明日预报。
 
 ---
 
-## Card rendering
+## 穿搭推荐规则（供调用方参考）
 
-**Stack:** [Satori](https://github.com/vercel/satori) → SVG + [@resvg/resvg-js](https://github.com/nicolo-ribaudo/resvg-js) → PNG
+以下规则不在脚本中强制执行，作为调用方 prompt 约束的参考：
 
-- Pure Node.js, no browser dependency
-- 2× zoom via `fitTo: { mode: "zoom", value: 2 }`
-- Font: PingFang SC (Regular / Medium / SemiBold) — change `--font-dir` for other systems
-
-**Card sections:**
-1. Header — location + date
-2. Main weather — large temperature + weather icon (Lucide-style inline SVG)
-3. Description row — condition label + high/low range
-4. Metrics grid — humidity / wind / UV / rain probability
-5. Outfit plans — Plan A / B vertical cards with base layer, coat, footwear, note
-6. Footer
-
-**Theme:** Deep blue-gray gradient. Colors shift slightly by weather code (clear → stormy).
+1. **方案数量**：固定 2 套（A 偏厚实，B 偏轻便）；大风（>30km/h）或下雪时增加第 3 套
+2. **内搭厚度**：由最高气温决定（最热时的舒适状态）
+3. **外套厚度**：由温差决定（温差越大外套越厚）
+4. **鞋子**：雨天防水、雪天防滑、寒冷厚底、其他运动鞋
+5. **说明**：每套方案配一句简短的场景说明
 
 ---
 
-## Files
+## 卡片渲染
 
-| File | Role |
+**技术栈：** [Satori](https://github.com/vercel/satori) → SVG + [@resvg/resvg-js](https://github.com/nicolo-ribaudo/resvg-js) → PNG
+
+- 纯 Node.js，无浏览器依赖
+- 2x 缩放：`fitTo: { mode: "zoom", value: 2 }`
+- 字体：PingFang SC（Regular / Medium / SemiBold），通过 `--font-dir` 指定目录
+
+**卡片区块：**
+1. Header — 地点 + 日期
+2. 主天气 — 大字温度 + 天气图标（Lucide 风格内联 SVG）
+3. 天气描述行 — 天气状况 + 最高/最低气温
+4. 气象四宫格 — 湿度 / 风力 / 紫外线 / 降水率
+5. 穿搭方案 — Plan A / Plan B 竖排卡片（内搭 / 外套 / 鞋子 / 说明）
+6. 底部署名
+
+**配色主题：** 深蓝灰渐变，随天气代码略有变化（晴天偏暖蓝，雷雨偏深紫）。
+
+---
+
+## 文件说明
+
+| 文件 | 职责 |
 |------|------|
-| `scripts/fetch-weather.mjs` | Fetches Open-Meteo data, writes `preview/output/weather.json` |
-| `scripts/render-satori.mjs` | Reads `card-data.json`, renders PNG, prints path to stdout |
-| `preview/card.html` | Static HTML prototype — visual reference only, not used at runtime |
-| `preview/output/` | Runtime output directory — gitignored |
+| `scripts/fetch-weather.mjs` | 拉取 Open-Meteo 天气数据，输出 `preview/output/weather.json` |
+| `scripts/render-satori.mjs` | 读取 `card-data.json`，渲染 PNG，stdout 输出路径 |
+| `preview/card.html` | HTML 设计原型，仅供视觉参考，不参与运行时流程 |
+| `preview/output/` | 运行时生成物目录，已加入 .gitignore |
